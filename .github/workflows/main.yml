@@ -10,39 +10,22 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
-    - name: Download Windows SDK Installer
+    - name: Install Chocolatey
       run: |
-        Invoke-WebRequest -Uri "https://go.microsoft.com/fwlink/?linkid=2120843" -OutFile "winsdksetup.exe"
+        Set-ExecutionPolicy Bypass -Scope Process -Force
+        [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.ServicePointManager]::SecurityProtocol -bor 3072
+        iex ((New-Object System.Net.WebClient).DownloadString('https://chocolatey.org/install.ps1'))
 
     - name: Install Windows SDK
-      run: |
-        Start-Process -FilePath "winsdksetup.exe" -ArgumentList "/quiet", "/features", "+", "/installPath", "C:\CustomSDKPath" -NoNewWindow -Wait
+      run: choco install windows-sdk-10.1 -y
 
-    - name: Verify Installation Directory
-      run: |
-        if (-Not (Test-Path "C:\CustomSDKPath")) {
-          Write-Error "Installation directory not found."
-          exit 1
-        }
+    - name: List Installed Files in Windows Kits
+      run: dir "C:\Program Files (x86)\Windows Kits\10\bin\x64"
 
-    - name: List Installed Files in CustomSDKPath
-      run: dir "C:\CustomSDKPath"
-
-    - name: Search for signtool.exe in CustomSDKPath and other locations
+    - name: Search for signtool.exe in Windows Kits
       id: find-signtool
       run: |
-        $paths = @(
-          "C:\CustomSDKPath",
-          "C:\Program Files (x86)\Windows Kits\10\bin\x64",
-          "C:\Program Files (x86)\Windows Kits\10\bin\x86",
-          "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC",
-          "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC"
-        )
-        $signtoolPath = $null
-        foreach ($path in $paths) {
-          $signtoolPath = Get-ChildItem -Path $path -Filter "signtool.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-          if ($signtoolPath) { break }
-        }
+        $signtoolPath = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin\x64" -Filter "signtool.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
         if (-not $signtoolPath) {
           Write-Error "signtool.exe not found."
           exit 1
