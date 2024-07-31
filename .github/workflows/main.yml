@@ -26,9 +26,18 @@ jobs:
         }
 
     - name: List Installed Files in BuildTools
-      run: dir "C:\BuildTools"
+      run: |
+        Get-ChildItem -Recurse "C:\BuildTools" | Format-Table -Property FullName, LastWriteTime
 
-    - name: Search for signtool.exe in BuildTools and other locations
+    - name: List Installed Files in Program Files (x86) Windows Kits
+      run: |
+        Get-ChildItem -Recurse "C:\Program Files (x86)\Windows Kits" | Format-Table -Property FullName, LastWriteTime
+
+    - name: List Installed Files in Program Files (x86) Visual Studio
+      run: |
+        Get-ChildItem -Recurse "C:\Program Files (x86)\Microsoft Visual Studio" | Format-Table -Property FullName, LastWriteTime
+
+    - name: Search for signtool.exe in all locations
       id: find-signtool
       run: |
         $paths = @(
