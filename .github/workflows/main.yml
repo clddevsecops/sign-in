@@ -46,7 +46,7 @@ jobs:
     - name: Verify signtool
       run: |
         if (Test-Path "${{ steps.find-signtool.outputs.signtool }}") {
-          "${{ steps.find-signtool.outputs.signtool }}" /?
+          & "${{ steps.find-signtool.outputs.signtool }}" /?
         } else {
           Write-Error "signtool.exe not found in the expected directory."
         }
