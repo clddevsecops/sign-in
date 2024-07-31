@@ -16,7 +16,7 @@ jobs:
         Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_buildtools.exe" -OutFile "vs_buildtools.exe"
         
         # Install the Windows SDK components to a specific folder
-        Start-Process -FilePath "vs_buildtools.exe" -ArgumentList "--quiet", "--wait", "--add", "Microsoft.VisualStudio.Component.Windows10SDK.19041", "--installPath", "C:\CustomSDKPath" -NoNewWindow -Wait
+        Start-Process -FilePath "vs_buildtools.exe" -ArgumentList "--quiet", "--wait", "--add", "Microsoft.VisualStudio.Component.Windows10SDK.19041", "--add", "Microsoft.VisualStudio.Component.VC.Tools.x86.x64", "--installPath", "C:\CustomSDKPath" -NoNewWindow -Wait
 
     - name: List Installed Files in CustomSDKPath
       run: dir "C:\CustomSDKPath"
@@ -25,6 +25,9 @@ jobs:
       id: find-signtool
       run: |
         $signtoolPath = Get-ChildItem -Path "C:\CustomSDKPath" -Filter "signtool.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        if (-not $signtoolPath) {
+          $signtoolPath = Get-ChildItem -Path "C:\Program Files (x86)\Windows Kits\10\bin\x64" -Filter "signtool.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        }
         if (-not $signtoolPath) {
           Write-Error "signtool.exe not found."
           exit 1
