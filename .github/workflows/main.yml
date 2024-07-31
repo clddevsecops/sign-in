@@ -16,7 +16,14 @@ jobs:
 
     - name: Install Windows SDK
       run: |
-        Start-Process -FilePath "winsdksetup.exe" -ArgumentList "/quiet", "/installPath", "C:\CustomSDKPath" -NoNewWindow -Wait
+        Start-Process -FilePath "winsdksetup.exe" -ArgumentList "/quiet", "/features", "+", "/installPath", "C:\CustomSDKPath" -NoNewWindow -Wait
+
+    - name: Verify Installation Directory
+      run: |
+        if (-Not (Test-Path "C:\CustomSDKPath")) {
+          Write-Error "Installation directory not found."
+          exit 1
+        }
 
     - name: List Installed Files in CustomSDKPath
       run: dir "C:\CustomSDKPath"
