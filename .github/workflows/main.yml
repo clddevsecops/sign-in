@@ -10,13 +10,20 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v2
 
+    - name: Download Visual Studio Build Tools Installer
+      run: |
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_buildtools.exe" -OutFile "vs_buildtools.exe"
+
     - name: Install Visual Studio Build Tools
       run: |
-        # Download the Visual Studio Build Tools installer
-        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_buildtools.exe" -OutFile "vs_buildtools.exe"
-        
-        # Install the required components, including the Windows 10 SDK
-        Start-Process -FilePath "vs_buildtools.exe" -ArgumentList "--quiet", "--wait", "--add Microsoft.VisualStudio.Component.Windows10SDK.19041 --add Microsoft.VisualStudio.Component.Windows10SDK --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --installPath C:\BuildTools" -NoNewWindow -Wait
+        Start-Process -FilePath "vs_buildtools.exe" -ArgumentList "--quiet", "--wait", "--add Microsoft.VisualStudio.Component.Windows10SDK.19041 --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 --installPath C:\BuildTools" -NoNewWindow -Wait
+
+    - name: Verify Installation Directory
+      run: |
+        if (-Not (Test-Path "C:\BuildTools")) {
+          Write-Error "Installation directory not found."
+          exit 1
+        }
 
     - name: List Installed Files in BuildTools
       run: dir "C:\BuildTools"
@@ -27,6 +34,7 @@ jobs:
         $paths = @(
           "C:\BuildTools",
           "C:\Program Files (x86)\Windows Kits\10\bin\x64",
+          "C:\Program Files (x86)\Windows Kits\10\bin\x86",
           "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\VC\Tools\MSVC",
           "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\VC\Tools\MSVC"
         )
