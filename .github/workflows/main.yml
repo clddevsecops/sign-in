@@ -1,0 +1,45 @@
+name: Install Windows SDK and Run Signing Script
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install Visual Studio Build Tools
+      run: |
+        # Download the Visual Studio Build Tools installer
+        Invoke-WebRequest -Uri "https://aka.ms/vs/17/release/vs_buildtools.exe" -OutFile "vs_buildtools.exe"
+        
+        # Install the Windows SDK components to a specific folder
+        Start-Process -FilePath "vs_buildtools.exe" -ArgumentList "--quiet", "--wait", "--add", "Microsoft.VisualStudio.Component.Windows10SDK.19041", "--installPath", "C:\CustomSDKPath" -NoNewWindow -Wait
+
+    - name: List Installed Files in CustomSDKPath
+      run: dir "C:\CustomSDKPath"
+
+    - name: Search for signtool.exe in CustomSDKPath
+      id: find-signtool
+      run: |
+        $signtoolPath = Get-ChildItem -Path "C:\CustomSDKPath" -Filter "signtool.exe" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        if (-not $signtoolPath) {
+          Write-Error "signtool.exe not found."
+          exit 1
+        }
+        echo "::set-output name=signtool::$signtoolPath"
+
+    - name: Verify signtool
+      run: |
+        if (Test-Path "${{ steps.find-signtool.outputs.signtool }}") {
+          "${{ steps.find-signtool.outputs.signtool }}" /?
+        } else {
+          Write-Error "signtool.exe not found in the expected directory."
+        }
+
+    - name: Run Sign Scripts
+      run: |
+        cd $env:GITHUB_WORKSPACE\BuildScripts\CodeSigning
+        .\Sign.bat "$env:GITHUB_WORKSPACE\DotNet\hit.exe" "${{ steps.find-signtool.outputs.signtool }}"
